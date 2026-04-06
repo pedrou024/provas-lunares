@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌕 Infraestrutura de Rádio nas Missões Lunares</title>
+<style>
+:root{
+  --bg:#030b16;--bg2:#061422;--surface:#081d35;--card:#0a2040;
+  --accent:#00cfff;--accent2:#ff6030;--gold:#ffcf5c;--green:#00e5a0;
+  --text:#ffffff; /* Texto primário agora é branco puro para contraste máximo */
+  --muted:#b3cce6; /* Azul-gelo claro para texto de apoio, altamente legível */
+  --border:#153d66; /* Bordas levemente mais claras para definir as formas */
+  --glow-blue:0 0 30px rgba(0,207,255,0.2);
+  --glow-gold:0 0 20px rgba(255,207,92,0.2);
+  --r:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth; font-size: 18px;} /* Aumento da escala base para todo o layout */
+body{background:var(--bg);color:var(--text);font-family:'Georgia',serif;overflow-x:hidden; line-height: 1.7;}
+
+/* CANVAS STARS */
+#starfield{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+/* PROGRESS BAR */
+#progress-bar{
+  position:fixed;top:0;left:0;height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--gold));
+  z-index:200;width:0%;transition:width 0.1s;
+}
+
+/* LINKS EXTERNOS (FONTES) */
+.ext-link {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(0, 207, 255, 0.4);
+  transition: all 0.2s ease;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.95rem; /* Aumentado para legibilidade */
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.2rem 0; /* Aumenta a área de clique */
+  position: relative;
+  z-index: 10; /* Garante que o link seja clicável sobre qualquer background */
+}
+.ext-link:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+  background: rgba(255, 207, 92, 0.1);
+}
+
+/* NAV */
+nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(3,11,22,0.95);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 2rem;
+}
+.nav-brand{display:flex;align-items:center;gap:0.75rem;color:var(--accent);font-size:0.9rem;letter-spacing:0.08em;text-transform:uppercase; font-weight:bold;}
+.signal-dot{width:10px;height:10px;border-radius:50%;background:var(--green);animation:blink 1.5s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:0.3;}50%{opacity:1;box-shadow:0 0 10px var(--green);}}
+.nav-pills{display:flex;gap:0.5rem;}
+.nav-pill{
+  padding:0.4rem 1rem;border-radius:2rem;
+  background:none;border:1px solid var(--border);
+  color:var(--muted);font-size:0.9rem;cursor:pointer;
+  font-family:inherit;transition:all 0.3s;text-decoration:none;
+}
+.nav-pill:hover,.nav-pill.active{border-color:var(--accent);color:var(--text);background:rgba(0,207,255,0.15);}
+@media(max-width:650px){.nav-pills{display:none;}}
+
+/* HERO */
+.hero{
+  position:relative;z-index:1;
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;
+  padding:3rem 2rem;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 50% at 50% 50%, rgba(0,207,255,0.06) 0%, transparent 70%);
+}
+.hero-kicker{
+  display:inline-flex;align-items:center;gap:0.6rem;
+  border:1px solid rgba(0,207,255,0.4);background:rgba(0,207,255,0.08);
+  color:var(--text);padding:0.5rem 1.5rem;border-radius:2rem;
+  font-size:0.9rem;letter-spacing:0.14em;text-transform:uppercase;
+  margin-bottom:2rem;opacity:0;animation:riseIn 0.7s ease 0.3s forwards;
+}
+.hero h1{
+  font-size:clamp(2.5rem,7vw,5rem);font-weight:normal;
+  letter-spacing:-0.03em;color:#fff;line-height:1.1;
+  opacity:0;animation:riseIn 0.7s ease 0.5s forwards;
+  margin-bottom:1rem;
+}
+.hero h1 .moon{color:var(--gold);}
+.hero h1 .signal{color:var(--accent);}
+.hero-deck{
+  max-width:800px;font-size:1.3rem;color:var(--muted);
+  margin:1.5rem auto 2.5rem;line-height:1.8;
+  opacity:0;animation:riseIn 0.7s ease 0.7s forwards;
+}
+.hero-deck strong{color:var(--text); font-weight:bold;}
+.scroll-hint{
+  position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);
+  color:var(--muted);font-size:0.85rem;letter-spacing:0.1em;text-transform:uppercase;
+  display:flex;flex-direction:column;align-items:center;gap:0.5rem;
+  opacity:0;animation:riseIn 0.5s ease 1.4s forwards;
+}
+.scroll-arrow{
+  width:2px;height:40px;background:linear-gradient(to bottom,var(--accent),transparent);
+  animation:scrollPulse 2s ease-in-out infinite;
+}
+@keyframes riseIn{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:none;}}
+@keyframes scrollPulse{0%,100%{opacity:0.4;transform:scaleY(0.8);}50%{opacity:1;transform:scaleY(1);}}
+
+/* SECTION WRAPPER */
+.section{
+  position:relative;z-index:1;
+  max-width:1100px;margin:0 auto;padding:6rem 1.5rem;
+}
+.section-header{margin-bottom:3rem;}
+.section-label{
+  font-size:0.9rem;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:0.75rem; font-weight:bold;
+}
+.section-label::before{content:'// ';}
+.section-title{font-size:clamp(2rem,4vw,2.8rem);font-weight:normal;color:#fff;line-height:1.2;}
+.section-title .hl{color:var(--gold);}
+.section-desc{color:var(--muted);margin-top:1rem;max-width:800px;font-size:1.2rem;line-height:1.7;}
+
+/* DIVIDER */
+.divider{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:0 1.5rem;}
+.divider hr{border:none;border-top:1px solid var(--border);}
+
+/* NETWORK CARDS */
+.net-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:2rem;}
+.net-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:2rem;
+  position:relative;overflow:hidden;
+  transition:transform 0.3s cubic-bezier(.2,.8,.3,1), border-color 0.3s, box-shadow 0.3s;
+}
+.net-card::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(0,207,255,0.06) 0%,transparent 60%);
+  opacity:0;transition:opacity 0.3s;
+  pointer-events:none; /* FIX: Permite que o clique passe pela máscara de background e atinja o link */
+}
+.net-card:hover{transform:translateY(-5px);border-color:var(--accent);box-shadow:var(--glow-blue);}
+.net-card:hover::after{opacity:1;}
+.net-flag{font-size:2.8rem;margin-bottom:1rem;}
+.net-name{font-size:1rem;color:var(--accent);letter-spacing:0.05em;margin-bottom:0.5rem;font-weight:bold;}
+.net-title{font-size:1.3rem;color:var(--text);margin-bottom:1rem;}
+.net-desc{font-size:1.1rem;color:var(--muted);line-height:1.7;}
+.net-tag{
+  display:inline-block;margin-top:1.5rem;font-size:0.85rem;
+  background:rgba(255,96,48,0.15);color:var(--accent2);
+  border:1px solid rgba(255,96,48,0.3);padding:0.3rem 0.8rem;border-radius:1rem;
+}
+
+/* SIGNAL SIMULATOR */
+.sim-box{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:2.5rem;margin-top:4rem;
+}
+.sim-box h3{color:var(--gold);font-size:1.4rem;margin-bottom:0.5rem;font-weight:normal;}
+.sim-box p{color:var(--muted);font-size:1.15rem;margin-bottom:2rem;}
+.sim-controls{display:flex;gap:1rem;flex-wrap:wrap;align-items:center;margin-bottom:1.5rem;}
+.sim-btn{
+  padding:0.75rem 1.5rem;border-radius:var(--r);
+  background:rgba(0,207,255,0.1);border:1px solid var(--accent);
+  color:var(--accent);font-family:inherit;font-size:1rem;
+  cursor:pointer;transition:all 0.3s; font-weight:bold;
+}
+.sim-btn:hover{background:rgba(0,207,255,0.25);}
+.sim-btn.active{background:var(--accent);color:var(--bg);}
+.sim-display{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:8px;padding:2rem;font-family:'Courier New',monospace;
+  font-size:1.05rem;color:var(--green);min-height:180px;
+  position:relative;overflow:hidden;
+}
+.sim-line{margin-bottom:0.5rem;opacity:0;animation:typeIn 0.3s ease forwards;}
+@keyframes typeIn{from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:none;}}
+.sim-error{color:var(--accent2) !important;}
+
+/* EVIDENCE TIMELINE */
+.timeline{display:flex;flex-direction:column;gap:0;}
+.tl-item{
+  display:grid;grid-template-columns:70px 1fr;gap:0;
+  position:relative;
+}
+.tl-left{
+  display:flex;flex-direction:column;align-items:center;
+  padding-top:0.2rem;
+}
+.tl-dot{
+  width:48px;height:48px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.5rem;border:2px solid var(--border);
+  background:var(--card);z-index:1;
+  transition:border-color 0.3s;
+}
+.tl-item:hover .tl-dot{border-color:var(--accent);}
+.tl-line{width:2px;flex:1;background:var(--border);margin-top:6px;}
+.tl-item:last-child .tl-line{display:none;}
+.tl-content{
+  padding:0 0 3.5rem 1.5rem;
+}
+.tl-who{font-size:0.95rem;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.5rem; font-weight:bold;}
+.tl-title{font-size:1.5rem;color:#fff;margin-bottom:0.75rem;}
+.tl-desc{font-size:1.15rem;color:var(--muted);line-height:1.7;}
+.tl-verdict{
+  display:inline-flex;align-items:center;gap:0.5rem;
+  margin-top:1.2rem;font-size:1rem;
+  color:var(--green);border:1px solid rgba(0,229,160,0.3);
+  background:rgba(0,229,160,0.1);padding:0.4rem 1rem;border-radius:1rem;
+}
+
+/* PHYSICS SECTION */
+.physics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:2rem;}
+.phys-card{
+  background:var(--card);border:1px solid rgba(255,96,48,0.25);
+  border-radius:var(--r);padding:2.5rem 2rem;text-align:center;
+  transition:transform 0.3s,box-shadow 0.3s;
+}
+.phys-card:hover{transform:translateY(-5px);box-shadow:0 0 30px rgba(255,96,48,0.15);}
+.phys-num{
+  font-size:3.5rem;font-family:'Courier New',monospace;
+  color:var(--accent2);display:block;margin-bottom:0.5rem;
+  font-weight:bold;
+}
+.phys-label{font-size:1.2rem;color:var(--text);margin-bottom:1rem; font-weight:bold;}
+.phys-desc{font-size:1.05rem;color:var(--muted);line-height:1.7;}
+
+/* RIVAL SECTION */
+.rival-block{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:3rem;margin-bottom:2rem;
+  display:grid;grid-template-columns:auto 1fr;gap:2.5rem;align-items:start;
+  transition:border-color 0.3s;
+}
+.rival-block:hover{border-color:var(--gold);}
+.rival-icon{font-size:4rem;}
+.rival-name{font-size:0.95rem;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.5rem; font-weight:bold;}
+.rival-title{font-size:1.5rem;color:#fff;margin-bottom:1rem;}
+.rival-desc{font-size:1.15rem;color:var(--muted);line-height:1.8;}
+.rival-key{
+  margin-top:1.5rem;padding:1.25rem 1.5rem;
+  background:rgba(255,207,92,0.08);border-left:4px solid var(--gold);
+  font-size:1.1rem;color:var(--text);
+}
+@media(max-width:768px){
+  .rival-block{grid-template-columns: 1fr; gap:1.5rem; padding: 2rem;}
+}
+
+/* FINAL CTA */
+.final{
+  position:relative;z-index:1;
+  background:radial-gradient(ellipse 80% 60% at 50% 100%, rgba(0,207,255,0.08) 0%, transparent 70%);
+  border-top:1px solid var(--border);
+  padding:7rem 2rem;text-align:center;
+}
+.final h2{font-size:clamp(2.2rem,5vw,3.8rem);font-weight:normal;color:#fff;margin-bottom:1.5rem;}
+.final h2 span{color:var(--accent);}
+.final p{color:var(--muted);max-width:800px;margin:0 auto;font-size:1.25rem;line-height:1.8;}
+.final-quote{
+  max-width:850px;margin:3rem auto 0;
+  padding:2.5rem;
+  border:1px solid rgba(255,207,92,0.25);
+  border-radius:var(--r);
+  background:rgba(255,207,92,0.05);
+  font-size:1.25rem;color:var(--text);font-style:italic;line-height:1.8;
+}
+.final-quote cite{display:block;color:var(--accent);font-style:normal;font-size:1rem;margin-top:1.25rem; font-weight:bold;}
+
+footer{text-align:center;color:var(--muted);font-size:1rem;padding:3rem 2rem;position:relative;z-index:1;border-top:1px solid var(--border);}
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<div id="progress-bar"></div>
+
+<nav>
+  <div class="nav-brand"><div class="signal-dot"></div> Rastreio Lunar</div>
+  <div class="nav-pills">
+    <a href="#rede" class="nav-pill">Infraestrutura</a>
+    <a href="#rivais" class="nav-pill">Monitoramento Global</a>
+    <a href="#timeline" class="nav-pill">Recepção de 69</a>
+    <a href="#fisica" class="nav-pill">Dados Físicos</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-kicker">📡 Arquitetura Histórica de Sistemas</div>
+  <h1>Infraestrutura de <span class="signal">Rádio</span><br>nas Missões <span class="moon">Lunares</span></h1>
+  <p class="hero-deck">Infraestruturas massivas de rádio espalhadas pelo globo, operadas inclusive por <strong>nações rivais</strong>, monitorando cada bit de telemetria emitido do espaço profundo.</p>
+  <div class="scroll-hint">
+    <span>Verificar Especificações</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<section class="section" id="rede">
+  <div class="section-header">
+    <div class="section-label">Infraestrutura</div>
+    <h2 class="section-title">A Rede Que <span class="hl">Ouve o Espaço</span></h2>
+    <p class="section-desc">Para manter contato contínuo com uma nave distante, a rotação da Terra exige múltiplas antenas. A solução é uma rede global coordenada, infraestrutura física pesada que está em operação e documentada.</p>
+  </div>
+  <div class="net-grid">
+    <div class="net-card">
+      <div class="net-flag">🇺🇸🇪🇸🇦🇺</div>
+      <div class="net-name">NASA • DSN</div>
+      <div class="net-title">Deep Space Network</div>
+      <div class="net-desc">
+        Sítios principais em Goldstone (EUA), Madri (Espanha) e Canberra (Austrália). Antenas de 70m de diâmetro operando em revezamento automático de acordo com a visada geométrica da Lua no horizonte.
+        <br><br>
+        <a href="https://www.esa.int/ESA_Multimedia/Images/2008/06/NASA_s_Goldstone_70m_antenna" class="ext-link" target="_blank">↳ Visitar Goldstone</a><br>
+        <a href="https://pt.wikipedia.org/wiki/Madrid_Deep_Space_Communications_Complex" class="ext-link" target="_blank">↳ Visitar Madri</a><br>
+        <a href="https://en.wikipedia.org/wiki/Canberra_Deep_Space_Communication_Complex" class="ext-link" target="_blank">↳ Visitar Canberra</a>
+      </div>
+      <span class="net-tag">Operacional desde 1963</span>
+    </div>
+    <div class="net-card">
+      <div class="net-flag">🇪🇺</div>
+      <div class="net-name">ESA • Estrack</div>
+      <div class="net-title">Rede Europeia</div>
+      <div class="net-desc">
+        A infraestrutura da Agência Espacial Europeia opera de forma autônoma. O complexo de Malargüe (Argentina) é notável pela precisão milimétrica no rastreio e calibração de missões interplanetárias.
+        <br><br>
+        <a href="https://www.esa.int/Enabling_Support/Operations/ESA_Ground_Stations/Malarguee_-_DSA_3" class="ext-link" target="_blank">↳ Analisar Complexo Malargüe (DSA 3)</a>
+      </div>
+      <span class="net-tag">Infraestrutura Própria</span>
+    </div>
+    <div class="net-card">
+      <div class="net-flag">🇨🇳</div>
+      <div class="net-name">CNSA • China</div>
+      <div class="net-title">Rede Kashgar / Jiamusi</div>
+      <div class="net-desc">
+        Array de antenas de 66m dedicadas ao programa espacial chinês. O domínio tecnológico para validar comunicações no espaço profundo garante a soberania e auditoria sobre o tráfego orbital e lunar.
+        <br><br>
+        <a href="https://spacedaily.com/china-launches-antenna-array-for-mars-moon-missions-999/" class="ext-link" target="_blank">↳ Documentação Kashgar / Jiamusi</a>
+      </div>
+      <span class="net-tag">Programa Chang'e Ativo</span>
+    </div>
+    <div class="net-card">
+      <div class="net-flag">🇷🇺</div>
+      <div class="net-name">ROSCOSMOS • Rússia</div>
+      <div class="net-title">RT-70 &amp; RT-64</div>
+      <div class="net-desc">
+        A engenharia de rádio russa mantém algumas das parabólicas mais sensíveis e massivas do planeta, herança da competição espacial, totalmente capazes de mapear emissões de rádio além da órbita lunar.
+        <br><br>
+        <a href="https://en.wikipedia.org/wiki/RT-64" class="ext-link" target="_blank">↳ Especificações RT-64</a><br>
+        <a href="https://grokipedia.com/page/rt_70" class="ext-link" target="_blank">↳ Especificações RT-70</a>
+      </div>
+      <span class="net-tag">Potência de Rastreio Massiva</span>
+    </div>
+  </div>
+
+  <div class="sim-box">
+    <h3>🧪 Console de Latência de Rede (Ping-Pong)</h3>
+    <p>A física estabelece um "delay" inquebrável baseado na velocidade da luz (299.792 km/s). Simule o tempo de ida e volta do pacote de rádio:</p>
+    <div class="sim-controls">
+      <button class="sim-btn" onclick="simulate('leo')">🛰 Satélite LEO (Baixa Órbita)</button>
+      <button class="sim-btn" onclick="simulate('geo')">📡 Satélite GEO (Alta Órbita)</button>
+      <button class="sim-btn active" onclick="simulate('moon')">🌕 Alvo Lunar</button>
+    </div>
+    <div class="sim-display" id="sim-out"></div>
+  </div>
+</section>
+
+<div class="divider"><hr></div>
+
+<section class="section" id="rivais">
+  <div class="section-header">
+    <div class="section-label">Validação Independente</div>
+    <h2 class="section-title">O Rastreio Realizado por <span class="hl">Terceiros</span></h2>
+    <p class="section-desc">A segurança do sistema de checagem espacial dependia do fato de que as telecomunicações eram abertas à interceptação física pelas antenas de outras nações, atuando como auditores severos e independentes da operação.</p>
+  </div>
+
+  <div class="rival-block">
+    <div class="rival-icon">🇷🇺</div>
+    <div>
+      <div class="rival-name">União Soviética • Monitoramento de Inteligência</div>
+      <div class="rival-title">NIIP-16, Crimeia — Array ADU-1000</div>
+      <div class="rival-desc">
+        A URSS possuía um sistema de escuta ativa dedicado a interceptar e analisar as comunicações americanas. O hardware responsável era o array ADU-1000: um conjunto sincronizado de 8 antenas operando do complexo NIIP-16. Os operadores russos ouviam a telemetria e o áudio da missão em tempo real. Pela medição dos ângulos das antenas (`Azimuth` e `Elevation`), a localização da fonte transmissora indicava inequivocamente a órbita lunar, impossibilitando qualquer alegação de sinais vindo da órbita terrestre.
+        <br><br>
+        <a href="https://commons.wikimedia.org/wiki/File:ADU-1000-3.jpg" class="ext-link" target="_blank">📷 Acessar Arquivo Histórico do Hardware ADU-1000</a>
+      </div>
+      <div class="rival-key">💬 A interceptação bem-sucedida pelo hardware rival serviu como a maior chancela de autenticidade estrutural da época.</div>
+    </div>
+  </div>
+
+  <div class="rival-block">
+    <div class="rival-icon">🔭</div>
+    <div>
+      <div class="rival-name">Reino Unido • Acadêmico & Civil</div>
+      <div class="rival-title">Observatório Jodrell Bank — Radiotelescópio Lovell (76m)</div>
+      <div class="rival-desc">
+        Livre de amarras governamentais americanas ou soviéticas, os rádio-astrônomos britânicos apontaram seu massivo telescópio de 76 metros para o espaço. Eles não apenas interceptaram o pacote de dados da missão americana, como também registraram simultaneamente a aproximação da sonda robótica russa Luna 15. Esse evento confirmou, com base matemática de telescópio de solo neutro, os eventos das duas potências.
+        <br><br>
+        <a href="https://www.jodrellbank.net/wp-content/webpc-passthru.php?src=https://www.jodrellbank.net/wp-content/uploads/2022/04/ex207.jpg&nocache=1" class="ext-link" target="_blank">📷 Log Fotográfico: O Telescópio em Operação (1969)</a><br>
+        <a href="https://www.jodrellbank.net/wp-content/uploads/2024/07/37-Luna15-Apollo11-short.mp3" class="ext-link" target="_blank">🎧 Arquivo de Áudio Bruto Interceptado por Jodrell Bank</a>
+      </div>
+      <div class="rival-key">🔑 Hardware acadêmico independente confirmando os dados de telemetria das duas superpotências simultaneamente.</div>
+    </div>
+  </div>
+
+</section>
+
+<div class="divider"><hr></div>
+
+<section class="section" id="timeline">
+  <div class="section-header">
+    <div class="section-label">Log de Comunicação: 1969</div>
+    <h2 class="section-title">A Fila de Processamento <span class="hl">MSFN</span></h2>
+    <p class="section-desc">Para garantir a banda de comunicação no momento exato do pouso e descida, a Manned Space Flight Network (MSFN) acionou estações baseadas exclusivamente no melhor ângulo de visada espacial.</p>
+  </div>
+
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-left"><div class="tl-dot">🦘</div><div class="tl-line"></div></div>
+      <div class="tl-content">
+        <div class="tl-who">Honeysuckle Creek • Site Australiano</div>
+        <div class="tl-title">Handshake Inicial na Superfície</div>
+        <div class="tl-desc">
+          Devido à rotação planetária, as antenas americanas não possuíam visada reta para o pacote de dados lunar durante os primeiros momentos cruciais. A estação de Honeysuckle Creek, geograficamente no lado vantajoso, processou e roteou os primeiros logs de áudio.
+          <br><br>
+          <a href="https://honeysucklecreek.net/station/more_photos.html" class="ext-link" target="_blank">📷 Documentação de Instalações e Operadores de Honeysuckle</a>
+        </div>
+        <div class="tl-verdict">Status: Link de comunicação validado pela geometria do momento.</div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-left"><div class="tl-dot">📡</div><div class="tl-line"></div></div>
+      <div class="tl-content">
+        <div class="tl-who">Parkes Observatory • Hardware Australiano Primário</div>
+        <div class="tl-title">Telemetria de Imagens (Banda Larga da Época)</div>
+        <div class="tl-desc">
+          O prato de 64 metros de Parkes ofereceu o ganho de sinal (Signal-to-Noise Ratio) necessário para extrair o feed de vídeo. Estações menores recebiam um sinal muito degradado. A antena captou fisicamente o tráfego de dados visual.
+          <br><br>
+          <a href="https://commons.wikimedia.org/wiki/File:Parkes.arp.750pix.jpg" class="ext-link" target="_blank">📷 Visão Estrutural do Observatório Parkes</a>
+        </div>
+        <div class="tl-verdict">Status: Integridade do pacote de imagem atestada fisicamente.</div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-left"><div class="tl-dot">🌑</div><div class="tl-line"></div></div>
+      <div class="tl-content">
+        <div class="tl-who">Sonda Luna 15 • Concorrência Orbital</div>
+        <div class="tl-title">Interceptação de Missão Simultânea</div>
+        <div class="tl-desc">Durante as transmissões da Apollo 11, radares independentes identificavam o ping intermitente da sonda Luna 15 cruzando a malha lunar. Seu impacto planejado contra a superfície consolidou o fato de que a corrida e o tráfego espacial existiam, fisicamente, no vácuo naquele exato ponto do tempo.</div>
+        <div class="tl-verdict">Status: Ambiente multitarefa detectado e arquivado nos logs de rádio.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"><hr></div>
+
+<section class="section" id="fisica">
+  <div class="section-header">
+    <div class="section-label">A Regra Inquebrável</div>
+    <h2 class="section-title">Grandezas Físicas Não <span class="hl">Podem ser Hackeadas</span></h2>
+    <p class="section-desc">É impossível falsificar a física de propagação direcional e o limite imposto pela velocidade da luz para toda a infraestrutura global.</p>
+  </div>
+  <div class="physics-grid">
+    <div class="phys-card">
+      <span class="phys-num">2.56s</span>
+      <div class="phys-label">RTT Base Lunar (Round-Trip Time)</div>
+      <div class="phys-desc">Qualquer terminal medindo o pulso de comunicação detectaria obrigatoriamente um delay de resposta cravado em cerca de 2.56 segundos, correspondente a uma distância de aproximadamente 384 mil km. Uma emissão falsificada da órbita da Terra entregaria respostas na casa dos milissegundos. O tempo do ping isola o remetente.</div>
+    </div>
+    <div class="phys-card">
+      <span class="phys-num">0.01°</span>
+      <div class="phys-label">Tolerância de Apontamento (Gimbal)</div>
+      <div class="phys-desc">As antenas massivas possuem feixes de recepção incrivelmente estreitos. Para captar o áudio com força suficiente, os motores das antenas precisavam travar exatamente nas coordenadas da Lua em relação à Terra. Desvios centesimais geram perda de sinal completa.</div>
+    </div>
+    <div class="phys-card">
+      <span class="phys-num">Tri-RF</span>
+      <div class="phys-label">Triangulação de Sinal Aberto</div>
+      <div class="phys-desc">Sinais de radiofrequência emitidos no espaço profundo se comportam de forma pública e radial. Quando o dado atinge o solo terrestre, qualquer estação em qualquer continente pode efetuar a medição angular. Simular esse comportamento exigiria falsificar coordenadas diferentes perfeitamente calculadas para a antena de cada país simultaneamente, o que excede as leis da física da propagação.</div>
+    </div>
+  </div>
+</section>
+
+<section class="final">
+  <h2>A Matemática <span>Encerra o Processo</span></h2>
+  <p>A solidez do fato histórico repousa sobre a mecânica estrita de ondas eletromagnéticas. Quando você retira as lentes opinativas e foca na camada mais profunda de envio de dados e telemetria, não sobra margem para falácias. Os logs do hardware de rádio-recepção de potências mundiais independentes servem como a prova técnica indestrutível.</p>
+  <div class="final-quote">
+    "A triangulação de radiofrequência operada pelas grandes redes de escuta exige que a física se comporte uniformemente. Se a telemetria que ouvimos em Jodrell Bank ou na Crimeia não fosse gerada fisicamente nos arredores da malha orbital lunar, os cálculos de inclinação do prato de recepção seriam flagrantemente contraditórios na rede."
+    <cite>— Princípio de Arquitetura de Telecomunicações em Espaço Profundo</cite>
+  </div>
+</section>
+
+<footer>
+  Arquitetura da Informação e Mapeamento Histórico de Telecomunicações Espaciais<br>
+  <span style="color:var(--border);">Segunda-6 de abril-2026</span>
+</footer>
+
+<script>
+/* ============ STARFIELD KERNEL ============ */
+(function(){
+  const canvas = document.getElementById('starfield');
+  const ctx = canvas.getContext('2d');
+  let stars=[], W, H;
+  function resize(){
+    W=canvas.width=window.innerWidth;
+    H=canvas.height=window.innerHeight;
+  }
+  function initStars(){
+    stars=[];
+    for(let i=0;i<200;i++){
+      stars.push({
+        x:Math.random()*W, y:Math.random()*H,
+        r:Math.random()*1.5+0.3,
+        a:Math.random(), da:0.002+Math.random()*0.008,
+        phase:Math.random()*Math.PI*2
+      });
+    }
+  }
+  let t=0;
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    stars.forEach(s=>{
+      const alpha = 0.3+0.7*Math.abs(Math.sin(t*s.da+s.phase));
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(200,225,255,${alpha})`;
+      ctx.fill();
+    });
+    t++;
+    requestAnimationFrame(draw);
+  }
+  resize(); initStars(); draw();
+  window.addEventListener('resize',()=>{resize();initStars();});
+})();
+
+/* ============ PROGRESS LISTENER ============ */
+window.addEventListener('scroll',()=>{
+  const el=document.documentElement;
+  const pct=(el.scrollTop/(el.scrollHeight-el.clientHeight))*100;
+  document.getElementById('progress-bar').style.width=pct+'%';
+});
+
+/* ============ PING SIMULATOR LOGIC ============ */
+const simData = {
+  leo:{
+    label:'Satélite LEO (400km)',
+    delay_ms:2.7,
+    color:'#ff6030',
+    lines:[
+      '[THREAD INICIADA] Calibrando transmissor...',
+      '[REQ] Enviando ping para: Satélite LEO (400 km)',
+      '[ACK] Sinal refletido...',
+      '>> RTT medido: 0.0027s (2.7 ms)',
+      '---',
+      '[DIAGNÓSTICO]',
+      'Parâmetro esperado p/ Missão Lunar: ~2560ms',
+      'Desvio RTT: 948x mais veloz que o alvo padrão',
+      '[!] STATUS FATAL: Latência expõe o alvo falsificado. Origem próxima confirmada.',
+    ],
+    error:true
+  },
+  geo:{
+    label:'Satélite GEO (36.000km)',
+    delay_ms:240,
+    color:'#ffcf5c',
+    lines:[
+      '[THREAD INICIADA] Calibrando transmissor...',
+      '[REQ] Enviando ping para: Satélite GEO (36.000 km)',
+      '[ACK] Sinal refletido...',
+      '>> RTT medido: 0.24s (240 ms)',
+      '---',
+      '[DIAGNÓSTICO]',
+      'Parâmetro esperado p/ Missão Lunar: ~2560ms',
+      'Desvio RTT: 10.6x mais veloz que o alvo padrão',
+      '[!] STATUS AVISO: Distância incompatível com telemetria lunar. O satélite orbitacional não tem profundidade suficiente.',
+    ],
+    error:true
+  },
+  moon:{
+    label:'Superfície Lunar (384.400km)',
+    delay_ms:2560,
+    color:'#00cfff',
+    lines:[
+      '[THREAD INICIADA] Calibrando transmissor banda-X...',
+      '[REQ] Enviando pulso de dados: Alvo Lunar (384.400 km)',
+      'Aguardando handshake da resposta c (299.792 km/s)...',
+      '.','.','.',
+      '[ACK] Handshake recebido. RTT medido: 2.56s (2560 ms)',
+      '---',
+      '[DIAGNÓSTICO]',
+      'Sincronizando ângulo de recepção Azimuth/Elevation...',
+      'Verificação Cruzada: MSFN Australiana [OK] | Array Soviético [OK]',
+      '[✓] STATUS SISTEMA: A integridade física do pacote corresponde milimetricamente com a posição lunar.',
+    ],
+    error:false
+  }
+};
+
+let simTimer=null;
+function simulate(type){
+  document.querySelectorAll('.sim-btn').forEach(b=>b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  const d=simData[type];
+  const out=document.getElementById('sim-out');
+  out.innerHTML='';
+  if(simTimer)clearTimeout(simTimer);
+  d.lines.forEach((line,i)=>{
+    simTimer=setTimeout(()=>{
+      const el=document.createElement('div');
+      el.className='sim-line'+(d.error&&line.startsWith('[!')?' sim-error':(line.startsWith('[✓')?' ':' '));
+      el.style.color = line.startsWith('[✓') ? '#00e5a0' : (line.startsWith('[!]' ) && d.color === '#ffcf5c' ? '#ffcf5c' : (line.startsWith('[!') ? '#ff6030' : ''));
+      el.textContent='> '+line;
+      el.style.animationDelay=`${i*0.05}s`;
+      out.appendChild(el);
+      out.scrollTop=out.scrollHeight;
+    },i*130);
+  });
+}
+window.addEventListener('DOMContentLoaded',()=>{
+  setTimeout(()=>{ simulate('moon'); },600);
+});
+
+/* ============ NAV ROUTER ============ */
+const sections=['rede','rivais','timeline','fisica'];
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      document.querySelectorAll('.nav-pill').forEach(p=>{
+        p.classList.toggle('active',p.getAttribute('href')==='#'+e.target.id);
+      });
+    }
+  });
+},{threshold:0.35});
+sections.forEach(id=>{const el=document.getElementById(id);if(el)observer.observe(el);});
+</script>
+</body>
+</html>
